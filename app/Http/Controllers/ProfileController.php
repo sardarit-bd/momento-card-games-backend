@@ -46,7 +46,6 @@ class ProfileController extends Controller
             'email'    => 'sometimes|email|unique:users,email,' . $user->id,
             'phone'    => 'sometimes|string|max:20',
             'address'  => 'sometimes|string|max:255',
-            // এখানে role, avatar intentionally বাদ দেওয়া হলো
         ]);
 
         if ($validator->fails()) {
