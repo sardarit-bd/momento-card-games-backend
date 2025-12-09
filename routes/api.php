@@ -1,18 +1,19 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminOrderController;
-use App\Http\Controllers\OtpController;
-use App\Http\Controllers\PreOrderController;
-use App\Http\Controllers\Product\CategoryController;
-use App\Http\Controllers\Product\ProductController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SubscriberController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PreOrderController;
+use App\Http\Controllers\SubscriberController;
+use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\PaymentGateway\StripeController;
+use App\Http\Controllers\PaymentGateway\WebhookController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -26,8 +27,6 @@ Route::post('resetpass',      [OtpController::class, 'resetPassword']);
 Route::get('profile/{id}',[ProfileController::class, 'profile']);
 Route::put('profile/{id}',[ProfileController::class, 'update']);
 
-// Stripe Payment Gateway
-Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
 
 // Protected routes
 Route::middleware('auth:api')->group(function () {
@@ -80,3 +79,9 @@ Route::get('shop/{slug}', [ProductController::class, 'show']);
 Route::apiResource('payments', PaymentController::class);
 
 Route::post('subscribers', [SubscriberController::class, 'store']);
+
+
+
+// Stripe Payment Gateway
+Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
+Route::post('/webhook/stripe', [WebhookController::class, 'handle']);
