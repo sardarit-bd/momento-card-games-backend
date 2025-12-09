@@ -12,6 +12,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentGateway\StripeController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -24,6 +25,9 @@ Route::post('resetpass',      [OtpController::class, 'resetPassword']);
 //Profile
 Route::get('profile/{id}',[ProfileController::class, 'profile']);
 Route::put('profile/{id}',[ProfileController::class, 'update']);
+
+// Stripe Payment Gateway
+Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
 
 // Protected routes
 Route::middleware('auth:api')->group(function () {
