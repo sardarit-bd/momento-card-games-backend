@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class StripeGatewayService
 {
+    // this method creates a checkout session
     public function createCheckoutSession(Request $request)
     {
         $request->validate([
@@ -17,6 +18,7 @@ class StripeGatewayService
             'address' => 'required|string',
             'city'    => 'nullable|string',
             'zipcode' => 'nullable|string',
+            'gateway' => 'required|string|in:stripe,cod,cash_on_delivery',
             'items'   => 'required|array|min:1',
             'items.*.product_id' => 'required|integer',
             'items.*.qty'        => 'required|integer|min:1',
@@ -25,6 +27,7 @@ class StripeGatewayService
         ]);
 
         DB::beginTransaction();
+
         try {
             // Create order
             $order = Order::create([
@@ -42,13 +45,35 @@ class StripeGatewayService
             // Create order items
             foreach ($request->items as $item) {
                 $order->orderItems()->create([
-                    'product_id' => $item['product_id'] ?? null,
+                    'product_id' => $item['product_id'],
                     'quantity'   => $item['qty'],
                 ]);
             }
 
-            $gateway = PaymentGatewayFactory::make($request->gateway ?? 'stripe');
+            // Handle gateway
+            $gateway = PaymentGatewayFactory::make($request->gateway);
 
+            // Cash on Delivery
+            if ($request->gateway === 'cod' || $request->gateway === 'cash_on_delivery') {
+                $order->orderHasPaids()->create([
+                    'amount'         => $order->total,
+                    'method'         => 'cod',
+                    'status'         => 'pending',
+                    'transaction_id' => null,
+                    'notes'          => 'Cash on Delivery',
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'status'   => 'success',
+                    'gateway'  => 'cod',
+                    'message'  => 'Order placed successfully using Cash on Delivery.',
+                    'order_id' => $order->id,
+                ]);
+            }
+
+            // Stripe checkout
             $stripeItems = array_map(function ($it) {
                 return [
                     'name' => $it['name'],
@@ -72,12 +97,12 @@ class StripeGatewayService
                 'session_id'   => $session->id ?? null,
                 'order_id'     => $order->id,
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
-
 
     private function calcTotal(array $items)
     {
@@ -87,4 +112,5 @@ class StripeGatewayService
         }
         return $sum;
     }
+
 }

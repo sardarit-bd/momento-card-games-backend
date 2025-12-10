@@ -178,26 +178,69 @@ class StripeGateway implements PaymentGatewayInterface
      * Helper to build the JSON the frontend expects.
      * Note: not used by webhook (webhook returns only 200). This is public to be called by OrderController.
      */
+    // public function buildOrderResponse(Order $order)
+    // {
+    //     $images = [];
+
+    //     foreach ($order->orderItems as $item) {
+    //         // adjust this to your actual product image column or path
+    //         $imagePath = $item->product->image ?? null;
+    //         dd($item->product->image[0]);
+
+    //         if ($imagePath) {
+    //             $fullPath = public_path($imagePath);
+    //             if (!file_exists($fullPath)) {
+    //                 $fullPath = storage_path('app/public/' . ltrim($imagePath, '/'));
+    //             }
+
+    //             if (file_exists($fullPath)) {
+    //                 $mime = mime_content_type($fullPath) ?: 'image/png';
+    //                 $b64  = base64_encode(file_get_contents($fullPath));
+    //                 $images[] = "data:{$mime};base64,{$b64}";
+    //             }
+    //         }
+    //     }
+
+    //     return [
+    //         'AllProductImage' => $images,
+    //         'City'            => $order->city ?? '',
+    //         'address'         => $order->address,
+    //         'email'           => $order->email,
+    //         'name'            => $order->name,
+    //         'payment_method'  => 'stripe',
+    //         'phone'           => $order->phone,
+    //         'roundTotolPrice' => $order->total,
+    //         'zipcode'         => $order->zipcode ?? '',
+    //     ];
+    // }
+
     public function buildOrderResponse(Order $order)
     {
         $images = [];
 
         foreach ($order->orderItems as $item) {
-            // adjust this to your actual product image column or path
             $imagePath = $item->product->image ?? null;
 
-            if ($imagePath) {
-                $fullPath = public_path($imagePath);
-                if (!file_exists($fullPath)) {
-                    // If using storage, adjust accordingly (storage_path or Storage::disk('public')->path)
-                    $fullPath = storage_path('app/public/' . ltrim($imagePath, '/'));
-                }
+            if (!$imagePath) {
+                continue; // skip if no image path
+            }
 
-                if (file_exists($fullPath)) {
-                    $mime = mime_content_type($fullPath) ?: 'image/png';
-                    $b64  = base64_encode(file_get_contents($fullPath));
-                    $images[] = "data:{$mime};base64,{$b64}";
-                }
+            // Try public folder first
+            $fullPath = public_path($imagePath);
+
+            // If not exists, try storage/app/public
+            if (!file_exists($fullPath)) {
+                $fullPath = storage_path('app/public/' . ltrim($imagePath, '/'));
+            }
+
+            // Only process if file actually exists
+            if (file_exists($fullPath)) {
+                $mime = mime_content_type($fullPath) ?: 'image/png';
+                $b64  = base64_encode(file_get_contents($fullPath));
+                $images[] = "data:{$mime};base64,{$b64}";
+            } else {
+                // Log missing files to debug later
+                Log::warning("Product image not found for OrderItem ID {$item->id}: {$imagePath}");
             }
         }
 
@@ -213,4 +256,6 @@ class StripeGateway implements PaymentGatewayInterface
             'zipcode'         => $order->zipcode ?? '',
         ];
     }
+
+
 }
