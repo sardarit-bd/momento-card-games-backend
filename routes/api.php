@@ -82,6 +82,13 @@ Route::post('subscribers', [SubscriberController::class, 'store']);
 
 
 
-// Stripe Payment Gateway
+//=============================================================
+//====================Stripe Payment===========================
+//=============================================================
 Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
+
+// Stripe Webhook
 Route::post('/webhook/stripe', [WebhookController::class, 'handle']);
+
+// Frontend will hit this after redirect to success
+Route::get('/order/{id}', [OrderController::class, 'show']);

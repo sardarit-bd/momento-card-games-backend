@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('phone');
             $table->string('address');
             $table->string('total');
-            $table->enum('status', ['pending', 'completed'])->default('pending');
+            $table->enum('status', ['pending', 'completed', 'canceled'])->default('pending');
             $table->boolean('is_paid')->default(0);
             $table->boolean('is_customized')->default(0);
             $table->string('customized_file')->nullable();

@@ -2,24 +2,20 @@
 
 namespace App\Http\Controllers\PaymentGateway;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Services\PaymentGateway\PaymentGatewayFactory;
 
 class WebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        // $event = $request->all();
+        $payload = $request->getContent();
+        $sig = $request->header('Stripe-Signature');
 
-        // if ($event['type'] === 'checkout.session.completed') {
-        //     // Payment succeeded
-        //     Order::create([
-        //         'user_id' => $event['data']['object']['customer'],
-        //         'amount'  => $event['data']['object']['amount_total'],
-        //     ]);
-        // }
+        $gateway = PaymentGatewayFactory::make('stripe');
 
-        // return response()->json(['status' => 'ok']);
+        return $gateway->handleWebhook($payload, $sig);
     }
 
 }

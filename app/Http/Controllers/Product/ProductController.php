@@ -231,7 +231,7 @@ class ProductController extends Controller
             'slug' => 'nullable|string|unique:products,slug,' . ($productId ?? 'NULL') . ',id',
             'type' => 'required|string|in:simple,customizable,trading,Simple,Customizable,Trading',
             'price' => 'required|numeric|min:0',
-            'status' => 'required|boolean',
+            'status' => 'required|in:active,inactive',
             'offer_price' => 'nullable|numeric|min:0|lt:price',
             'category_id' => 'required|exists:categories,id',
             'short_description' => 'nullable|string',

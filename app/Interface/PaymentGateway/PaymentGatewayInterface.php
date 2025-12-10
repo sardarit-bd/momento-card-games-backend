@@ -6,5 +6,5 @@ interface PaymentGatewayInterface
 {
     public function createCheckout(array $data);
 
-    public function handleWebhook($payload);
+    public function handleWebhook(string $payload, ?string $sigHeader = null);
 }
