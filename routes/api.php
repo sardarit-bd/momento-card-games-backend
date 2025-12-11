@@ -12,6 +12,7 @@ use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Product\CategoryController;
+use App\Http\Controllers\Api\Admin\SecretKeyController;
 use App\Http\Controllers\PaymentGateway\StripeController;
 use App\Http\Controllers\PaymentGateway\WebhookController;
 use App\Http\Controllers\Admin\AdminOrderPaymentController;
@@ -34,7 +35,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('auth/me',      [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh',[AuthController::class, 'refresh']);
-    
+
 
 //======================================================================
 //============================Admin can handle==========================
@@ -49,6 +50,29 @@ Route::middleware(['auth:api', 'roles:Admin'])->prefix('admin')->group(function 
     // Payment status update  
     Route::get('/orders/{order}/payments', [AdminOrderPaymentController::class, 'payments']);
     Route::put('/payment/{orderHasPaid}/status', [AdminOrderPaymentController::class, 'updateStatus']);
+
+
+    // Secret Key Management
+    Route::get('/secrets', [SecretKeyController::class, 'index'])
+        ->name('secrets.index');
+
+    Route::get('/secrets/{secret}', [SecretKeyController::class, 'show'])
+        ->name('secrets.show');
+
+    Route::post('/secrets', [SecretKeyController::class, 'store'])
+        ->name('secrets.store');
+
+    Route::put('/secrets/{secret}', [SecretKeyController::class, 'update'])
+        ->name('secrets.update');
+
+    Route::delete('/secrets/{secret}', [SecretKeyController::class, 'destroy'])
+        ->name('secrets.destroy');
+
+    Route::post('/secrets/{secret}/restore', [SecretKeyController::class, 'restore'])
+        ->name('secrets.restore');
+        
+    Route::get('/secret/{name}', [SecretKeyController::class, 'getByName'])
+        ->name('secrets.get-by-name');
     
 });
 
@@ -100,7 +124,7 @@ Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
 Route::post('/webhook/stripe', [WebhookController::class, 'handle']);
 
 // Order details and retry payment
-Route::group(['middleware' => 'auth:api'], function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('/order/{id}', [OrderController::class, 'show']);
     Route::post('/order/{order}/retry', [OrderController::class, 'retryPayment']);
 });
