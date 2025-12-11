@@ -31,7 +31,6 @@ class StripeController extends Controller
             'status' => 'success',
             'message' => 'Payment successful!',
             'session_id' => $request->session_id,
-            'order_id' => $request->order_id,
         ]);
     }
 
@@ -60,7 +59,6 @@ class StripeController extends Controller
 
         return response()->json([
             'status'  => 'canceled',
-            'order_id' => $orderId,
             'message' => 'Payment has been canceled. Your order is still saved and can be retried within 60 minutes.',
         ]);
     }
