@@ -34,19 +34,22 @@ Route::middleware('auth:api')->group(function () {
     Route::get('auth/me',      [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('auth/refresh',[AuthController::class, 'refresh']);
+    
 
 //======================================================================
 //============================Admin can handle==========================
 //======================================================================
-Route::apiResource('categories',CategoryController::class);
-Route::apiResource('products',ProductController::class);
-Route::resource('orders', AdminOrderController::class)
-    ->only(['index', 'show', 'update']);
+Route::middleware(['auth:api', 'roles:Admin'])->prefix('admin')->group(function () {
+    Route::apiResource('categories',CategoryController::class);
+    Route::apiResource('products',ProductController::class);
+    Route::resource('orders', AdminOrderController::class)
+        ->only(['index', 'show', 'update']);
+    Route::get('/orders/{order}/cancel', [AdminOrderController::class, 'orderCancel']);
 
-// Payment status update  
-Route::middleware('auth:api')->group(function () {
-    Route::get('/admin/orders/{order}/payments', [AdminOrderPaymentController::class, 'payments']);
-    Route::put('/admin/payment/{orderHasPaid}/status', [AdminOrderPaymentController::class, 'updateStatus']);
+    // Payment status update  
+    Route::get('/orders/{order}/payments', [AdminOrderPaymentController::class, 'payments']);
+    Route::put('/payment/{orderHasPaid}/status', [AdminOrderPaymentController::class, 'updateStatus']);
+    
 });
 
 Route::get('subscribers', [SubscriberController::class, 'index']);

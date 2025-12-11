@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\LoginUserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -10,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\User;
+use Illuminate\Auth\Events\Login;
 
 class AuthController extends Controller
 {
@@ -26,7 +28,7 @@ class AuthController extends Controller
                 'password' => ['required', 'string', 'min:8'],
                 'phone'    => ['nullable', 'string', 'max:20'],
                 'address'  => ['nullable', 'string', 'max:255'],
-                'role'   => ['nullable', 'string', 'max:255'],
+                'role'   => ['nullable', 'string|in:Customer,Admin', 'max:255'],
             ]);
 
             $user = User::create([
@@ -47,7 +49,7 @@ class AuthController extends Controller
                 'message' => 'User registered successfully',
                 'data'    => [
                     'token' => $token,
-                    'user'  => $user,
+                    'user'  => LoginUserResource::make($user),
                 ],
             ], 201);
 
@@ -109,7 +111,7 @@ class AuthController extends Controller
                 'message' => 'Login successful',
                 'data'    => [
                     'token' => $token,
-                    'user'  => $user,
+                    'user'  => LoginUserResource::make($user),
                 ],
             ], 200);
 

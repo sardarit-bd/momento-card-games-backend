@@ -13,9 +13,17 @@ class AdminOrderPaymentController extends Controller
      * Diplay payments for a specific order
     */
     // AdminOrderController.php or similar
-    public function payments(Order $order)
+    public function payments($id)
     {
+        $order = Order::findOrFail($id);
         $payments = $order->orderHasPaids()->latest()->get();
+
+        if (!$payments) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No payments found for this order'
+            ], 404);
+        }
 
         return response()->json([
             'data' => $payments

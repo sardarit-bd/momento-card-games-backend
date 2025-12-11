@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\OrderResource;
 
 class AdminOrderController extends Controller
 {
@@ -133,6 +135,57 @@ class AdminOrderController extends Controller
     }
 
 
+    //cancel order
+    public function orderCancel($id)
+    {
+        $order = Order::find($id);
+
+        if (!$order) {
+            return $this->errorResponse('Order not found', 404);
+        }
+
+        if (in_array($order->status, ['canceled', 'completed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be cancelled.'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $order->status = 'canceled';
+            $data = $order->save();
+
+            // update order payments status
+            foreach ($order->orderHasPaids as $payment) {
+                $payment->status = 'failed';
+                $payment->save();
+            }
+
+            DB::commit();
+
+            return $this->successResponse(
+                'Order Cancelled successfully',
+                $data
+            );
+
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Order cancellation failed: ' . $e->getMessage(), [
+                'order_id' => $order->id,
+                'admin_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel order. Please try again.'
+            ], 500);
+        }
+    }
+
+
 
     /**
      * Return success response.
@@ -158,4 +211,5 @@ class AdminOrderController extends Controller
             'message' => $message,
         ], $status);
     }
+
 }

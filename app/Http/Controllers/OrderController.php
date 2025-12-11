@@ -172,14 +172,13 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Build the JSON response
+
         $images = [];
         foreach ($order->orderItems as $item) {
             $product = $item->product;
             if ($product && $product->image) {
                 $imagePath = public_path($product->image);
 
-                // If using storage disk, adjust this
                 if (!file_exists($imagePath)) {
                     $imagePath = storage_path('app/public/' . ltrim($product->image, '/'));
                 }
