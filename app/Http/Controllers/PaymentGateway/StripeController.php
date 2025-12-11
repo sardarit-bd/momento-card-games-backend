@@ -6,7 +6,6 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\PaymentGateway\StripeGatewayService;
-use App\Services\PaymentGateway\PaymentGatewayFactory;
 
 
 class StripeController extends Controller
