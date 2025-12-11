@@ -59,7 +59,7 @@ class StripeController extends Controller
 
         return response()->json([
             'status'  => 'canceled',
-            'message' => 'Payment has been canceled. Your order is still saved and can be retried within 60 minutes.',
+            'message' => 'Payment has been canceled. Your order is still saved and can be retried within 24 hours.',
         ]);
     }
 }
