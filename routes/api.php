@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\PaymentGateway\StripeController;
 use App\Http\Controllers\PaymentGateway\WebhookController;
+use App\Http\Controllers\Admin\AdminOrderPaymentController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -42,6 +43,11 @@ Route::apiResource('products',ProductController::class);
 Route::resource('orders', AdminOrderController::class)
     ->only(['index', 'show', 'update']);
 
+// Payment status update  
+Route::middleware('auth:api')->group(function () {
+    Route::get('/admin/orders/{order}/payments', [AdminOrderPaymentController::class, 'payments']);
+    Route::put('/admin/payment/{orderHasPaid}/status', [AdminOrderPaymentController::class, 'updateStatus']);
+});
 
 Route::get('subscribers', [SubscriberController::class, 'index']);
 
