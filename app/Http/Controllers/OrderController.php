@@ -204,4 +204,61 @@ class OrderController extends Controller
         ]);
     }
 
+    // retry payment for pending orders
+    public function retryPayment(Order $order)
+    {
+        if ($order->status !== 'pending') {
+            return response()->json(['error' => 'Order is not pending'], 403);
+        }
+
+        $user = auth('api')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        if ($order->email !== $user->email) {
+            return response()->json(['error' => 'Unauthorized: Order does not belong to you'], 403);
+        }
+
+        $previousPayment = $order->orderHasPaids()->where('status', 'pending')->latest()->first();
+        if ($previousPayment) {
+            $previousPayment->update([
+                'status' => 'failed',
+                'notes' => 'Previous attempt abandoned - user retried manually',
+            ]);
+        }
+
+        $order->orderHasPaids()->create([
+            'amount' => $order->total,
+            'method' => 'stripe',
+            'status' => 'pending',
+            'notes' => 'Manual retry by user',
+        ]);
+
+        $gateway = PaymentGatewayFactory::make('stripe');
+        $stripeItems = $order->orderItems->map(function ($item) {
+            $product = $item->product;
+            $sellingPrice = $product->offer_price > 0 ? $product->offer_price : $product->price;
+            return [
+                'name' => $product->name,
+                'qty' => $item->quantity,
+                'price' => round($sellingPrice * 100),
+            ];
+        })->toArray();
+
+        $session = $gateway->createCheckout([
+            'items' => $stripeItems,
+            'order_id' => $order->id,
+            'success_url' => env('APP_URL') . '/payment/success',
+            'cancel_url' => env('APP_URL') . '/payment/cancel',
+            'currency' => 'usd',
+            'metadata' => ['order_id' => $order->id],
+            'expires_at' => now()->addHour(1)->timestamp,
+            'after_expiration' => ['recovery' => ['enabled' => true]],
+        ]);
+
+        return response()->json(['checkout_url' => $session->url]);
+    }
+
 }

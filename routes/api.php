@@ -96,5 +96,8 @@ Route::post('/checkout', [StripeController::class, 'createCheckoutSession']);
 // Stripe Webhook
 Route::post('/webhook/stripe', [WebhookController::class, 'handle']);
 
-// Frontend will hit this after redirect to success
-Route::get('/order/{id}', [OrderController::class, 'show']);
+// Order details and retry payment
+Route::group(['middleware' => 'auth:api'], function () {
+    Route::get('/order/{id}', [OrderController::class, 'show']);
+    Route::post('/order/{order}/retry', [OrderController::class, 'retryPayment']);
+});

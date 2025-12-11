@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\PaymentGateway;
 
+use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Services\PaymentGateway\PaymentGatewayFactory;
 use App\Services\PaymentGateway\StripeGatewayService;
+use App\Services\PaymentGateway\PaymentGatewayFactory;
 
 
 class StripeController extends Controller
@@ -34,11 +35,33 @@ class StripeController extends Controller
         ]);
     }
 
-    public function cancel()
+
+    public function cancel(Request $request)
     {
+        $orderId = $request->query('order_id');
+
+        if ($orderId) {
+            $order = Order::find($orderId);
+
+            if ($order) {
+                $payment = $order->orderHasPaids()
+                    ->where('status', 'pending')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'pending',
+                        'notes'  => 'Payment canceled by user during Stripe checkout.',
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
-            'status' => 'canceled',
-            'message' => 'Payment canceled by user.'
+            'status'  => 'canceled',
+            'order_id' => $orderId,
+            'message' => 'Payment has been canceled. Your order is still saved and can be retried within 60 minutes.',
         ]);
     }
 }
